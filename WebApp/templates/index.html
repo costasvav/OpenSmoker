@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, height=device-height">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="orientation" content="portrait">
+    <title>OpenSmoker Dashboard</title>
+    <!-- Add Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            min-height: 100vh;
+            max-height: 100vh;
+            background-color: #f5f5f5;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            font-size: 12px;
+        }
+        
+        .sidebar {
+            width: 100%;
+            background-color: #333;
+            color: white;
+            padding: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        
+        .sidebar h2 {
+            width: 100%;
+            margin-bottom: 8px;
+            text-align: center;
+            font-size: 16px;
+        }
+        
+        .option-group {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            flex: 1;
+            min-width: 170px;
+            padding-right: 8px;
+        }
+        
+        .option-group h3 {
+            margin-bottom: 4px;
+            font-size: 12px;
+        }
+        
+        .option-group select, 
+        .option-group input, 
+        .option-group button {
+            width: 100%;
+            padding: 4px;
+            margin-bottom: 4px;
+            border-radius: 3px;
+            border: none;
+            font-size: 11px;
+        }
+        
+        .option-group button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .option-group button:hover {
+            background-color: #45a049;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 8px;
+            overflow-y: auto;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .dashboard-header h1 {
+            font-size: 16px;
+        }
+        
+        #status-indicator {
+            font-size: 12px;
+        }
+        
+        .chart-panel {
+            background-color: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        
+        .chart-panel h3 {
+            padding: 6px 10px;
+            background-color: #f0f0f0;
+            border-bottom: 1px solid #ddd;
+            font-size: 12px;
+        }
+        
+        .chart-container {
+            width: 100%;
+            height: 180px;
+            padding: 5px;
+        }
+        
+        .dashboard-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .temp-charts-column {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .small-panels-grid {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+        
+        .small-panel {
+            background-color: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .small-panel h4 {
+            padding: 4px 6px;
+            background-color: #f0f0f0;
+            border-bottom: 1px solid #ddd;
+            font-size: 11px;
+        }
+        
+        .small-chart {
+            width: 100%;
+            height: 100px;
+            padding: 3px;
+        }
+        
+        @media (max-width: 768px) {
+            .small-panels-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .small-panels-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        /* Portrait orientation for kiosk mode (1280x800) */
+        @media (orientation: portrait) and (max-width: 1280px) and (max-height: 800px) {
+            body {
+                flex-direction: column;
+                overflow: hidden;
+                height: 100vh;
+                max-height: 100vh;
+            }
+            
+            .sidebar {
+                height: auto;
+                max-height: 60px; /* Reduced height further */
+                min-height: 60px;
+                display: flex;
+                flex-wrap: wrap;
+                padding: 3px;
+            }
+            
+            .sidebar h2 {
+                width: 100%;
+                margin-bottom: 1px;
+                font-size: 14px;
+            }
+            
+            .option-group {
+                margin-bottom: 1px;
+                padding-bottom: 1px;
+                flex-basis: 22%;
+            }
+            
+            .option-group h3 {
+                font-size: 9px;
+                margin-bottom: 1px;
+            }
+            
+            .option-group select, 
+            .option-group input, 
+            .option-group button {
+                padding: 1px;
+                margin-bottom: 1px;
+                font-size: 9px;
+                height: 16px;
+            }
+            
+            .main-content {
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                padding: 3px;
+                height: calc(100vh - 70px); /* Adjusted for menubar + reduced sidebar */
+                max-height: calc(100vh - 70px);
+            }
+            
+            .dashboard-header {
+                margin-bottom: 2px;
+                height: 18px;
+            }
+            
+            .dashboard-header h1 {
+                font-size: 12px;
+            }
+            
+            .dashboard-header #status-indicator {
+                font-size: 10px;
+            }
+            
+            .dashboard-layout {
+                height: calc(100% - 20px);
+                overflow: hidden;
+                gap: 3px;
+            }
+            
+            .temp-charts-column {
+                height: 52%;
+                min-height: 0;
+                gap: 3px;
+            }
+            
+            .chart-panel {
+                margin-bottom: 0;
+                min-height: 0;
+                flex: 1;
+            }
+            
+            .chart-panel h3 {
+                padding: 2px;
+                font-size: 10px;
+                margin: 0;
+            }
+            
+            .chart-container {
+                height: calc(100% - 15px);
+                min-height: 0;
+                padding: 2px;
+            }
+            
+            .small-panels-grid {
+                height: 48%;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 3px;
+                min-height: 0;
+                margin-top: 2px;
+            }
+            
+            .small-panel h4 {
+                padding: 1px;
+                font-size: 9px;
+                margin: 0;
+            }
+            
+            .small-chart {
+                height: calc(100% - 12px);
+                min-height: 0;
+                padding: 0;
+            }
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            font-style: italic;
+            color: #666;
+            font-size: 11px;
+        }
+        
+        .action-btn {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .action-btn.off {
+            background-color: #f44336;
+        }
+        
+        .temp-control {
+            display: flex;
+            margin-bottom: 4px;
+        }
+        
+        .temp-control input {
+            flex: 1;
+            margin-right: 2px;
+        }
+        
+        .temp-control button {
+            width: auto;
+            padding: 4px 6px;
+        }
+        
+        @media (max-width: 768px) {
+            .temp-control {
+                flex-direction: row;
+            }
+            
+            .temp-control input, 
+            .temp-control button {
+                font-size: 10px;
+                padding: 2px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>OpenSmoker</h2>
+        
+        <div class="option-group">
+            <h3>Time Range</h3>
+            <select id="time-range">
+                <option value="-15m">Last 15 minutes</option>
+                <option value="-1h">Last 1 hour</option>
+                <option value="-3h">Last 3 hours</option>
+                <option value="-6h" selected>Last 6 hours</option>
+                <option value="-12h">Last 12 hours</option>
+                <option value="-24h">Last 24 hours</option>
+            </select>
+        </div>
+        
+        <div class="option-group">
+            <h3>Dashboard</h3>
+            <select id="dashboard-select">
+                <option value="main">Main Dashboard</option>
+                <option value="temperature">Temperature</option>
+                <option value="smoke">Smoke Density</option>
+                <option value="system">System Status</option>
+            </select>
+        </div>
+        
+        <div class="option-group">
+            <h3>Refresh Rate</h3>
+            <select id="refresh-rate">
+                <option value="5000">5 seconds</option>
+                <option value="10000" selected>10 seconds</option>
+                <option value="30000">30 seconds</option>
+                <option value="60000">1 minute</option>
+                <option value="300000">5 minutes</option>
+            </select>
+        </div>
+        
+        <div class="option-group">
+            <h3>Controls</h3>
+            <button id="refresh-btn">Refresh Now</button>
+            <button id="fullscreen-btn">Fullscreen</button>
+        </div>
+        
+        <div class="option-group">
+            <h3>Smoker Controls</h3>
+            <button id="cooking-toggle-btn" class="action-btn">Start Cooking</button>
+            <div class="temp-control">
+                <input type="number" id="air-temp-input" min="0" max="500" placeholder="Air Temp">
+                <button id="set-air-temp-btn" class="action-btn">Set</button>
+            </div>
+            <div class="temp-control">
+                <input type="number" id="meat-temp-input" min="0" max="300" placeholder="Meat Temp">
+                <button id="set-meat-temp-btn" class="action-btn">Set</button>
+            </div>
+            <div class="temp-control">
+                <input type="number" id="smoker-rate-input" min="0" max="100" placeholder="Smoke Rate">
+                <button id="set-smoker-rate-btn" class="action-btn">Set</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="dashboard-header">
+            <h1 id="dashboard-title">Main Dashboard</h1>
+            <div id="status-indicator">Status: Connecting...</div>
+        </div>
+        
+        <div class="dashboard-layout">
+            <div class="temp-charts-column">
+                <div class="chart-panel">
+                    <h3>Air Temperatures</h3>
+                    <div id="air-temp-chart" class="chart-container">
+                        <div class="loading">Loading data...</div>
+                    </div>
+                </div>
+                
+                <div class="chart-panel">
+                    <h3>Meat Temperatures</h3>
+                    <div id="meat-temp-chart" class="chart-container">
+                        <div class="loading">Loading data...</div>
+                    </div>
+                </div>
+                
+                <div class="chart-panel">
+                    <h3>Component State</h3>
+                    <div id="component-state-chart" class="chart-container">
+                        <div class="loading">Loading data...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="small-panels-grid">
+                <div class="small-panel">
+                    <h4>Current Air Temp</h4>
+                    <div id="current-air-temp" class="small-chart"></div>
+                </div>
+                <div class="small-panel">
+                    <h4>Current Meat Temp</h4>
+                    <div id="current-meat-temp" class="small-chart"></div>
+                </div>
+                <div class="small-panel">
+                    <h4>Target Air Temp</h4>
+                    <div id="target-air-temp" class="small-chart"></div>
+                </div>
+                <div class="small-panel">
+                    <h4>Target Meat Temp</h4>
+                    <div id="target-meat-temp" class="small-chart"></div>
+                </div>
+                <div class="small-panel">
+                    <h4>Cooking Status</h4>
+                    <div id="cooking-status" class="small-chart"></div>
+                </div>
+                <div class="small-panel">
+                    <h4>Fan Status</h4>
+                    <div id="fan-status" class="small-chart"></div>
+                </div>
+                <div class="small-panel">
+                    <h4>Heater Status</h4>
+                    <div id="heater-status" class="small-chart"></div>
+                </div>
+                <div class="small-panel">
+                    <h4>Smoker Rate</h4>
+                    <div id="smoker-rate" class="small-chart"></div>
+                </div>
+                <div class="small-panel">
+                    <h4>Temperature Delta</h4>
+                    <div id="temp-delta" class="small-chart"></div>
+                </div>
+                <div class="small-panel">
+                    <h4>Cook Duration</h4>
+                    <div id="cook-duration" class="small-chart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let refreshInterval;
+        let currentTimeRange = document.getElementById('time-range').value;
+        let currentDashboard = document.getElementById('dashboard-select').value;
+        let refreshRate = parseInt(document.getElementById('refresh-rate').value);
+        let lastData = {
+            airTemps: null,
+            meatTemps: null,
+            targetTemps: null,
+            componentState: null
+        };
+        
+        // Initialize charts
+        function initCharts() {
+            // Clear existing timers
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+            
+            // Update status indicator
+            updateConnectionStatus('Connecting...');
+            
+            // Load initial data
+            loadAllData();
+            
+            // Set up refresh interval
+            refreshInterval = setInterval(loadAllData, refreshRate);
+        }
+        
+        // Function to load all data
+        function loadAllData() {
+            loadAirTemperatures();
+            loadMeatTemperatures();
+            loadTargetTemperatures();
+            loadComponentState();
+        }
+        
+        // Load air temperature data
+        function loadAirTemperatures() {
+            fetch(`/api/data/air-temperatures?from=${encodeURIComponent(currentTimeRange)}&to=now()`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    lastData.airTemps = data;
+                    updateConnectionStatus('Connected');
+                    renderAirTemperatureChart();
+                    updateCurrentAirTempPanel(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching air temperature data:', error);
+                    updateConnectionStatus('Connection Error');
+                });
+        }
+        
+        // Load meat temperature data
+        function loadMeatTemperatures() {
+            fetch(`/api/data/meat-temperatures?from=${encodeURIComponent(currentTimeRange)}&to=now()`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    lastData.meatTemps = data;
+                    renderMeatTemperatureChart();
+                    updateCurrentMeatTempPanel(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching meat temperature data:', error);
+                });
+        }
+        
+        // Load target temperature data
+        function loadTargetTemperatures() {
+            fetch(`/api/data/target-temperatures?from=${encodeURIComponent(currentTimeRange)}&to=now()`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    lastData.targetTemps = data;
+                    // Re-render charts if we already have air/meat data
+                    if (lastData.airTemps) renderAirTemperatureChart();
+                    if (lastData.meatTemps) renderMeatTemperatureChart();
+                    updateTargetTempPanels(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching target temperature data:', error);
+                });
+        }
+        
+        // Load component state data
+        function loadComponentState() {
+            fetch(`/api/data/component-state?from=${encodeURIComponent(currentTimeRange)}&to=now()`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    lastData.componentState = data;
+                    renderComponentStateChart(data);
+                    updateStatusPanels(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching component state data:', error);
+                });
+        }
+        
+        // Render air temperature chart with target
+        function renderAirTemperatureChart() {
+            // Skip if we don't have data
+            if (!lastData.airTemps) return;
+            
+            const plotData = [];
+            
+            // Add air temperature traces
+            if (lastData.airTemps.temp_air_top && lastData.airTemps.temp_air_top.length > 0) {
+                const topTemp = {
+                    x: lastData.airTemps.temp_air_top.map(item => new Date(item.time)),
+                    y: lastData.airTemps.temp_air_top.map(item => item.value),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Top Air',
+                    line: { color: 'rgb(255, 99, 132)', width: 1 }
+                };
+                plotData.push(topTemp);
+            }
+            
+            if (lastData.airTemps.temp_air_bottom && lastData.airTemps.temp_air_bottom.length > 0) {
+                const bottomTemp = {
+                    x: lastData.airTemps.temp_air_bottom.map(item => new Date(item.time)),
+                    y: lastData.airTemps.temp_air_bottom.map(item => item.value),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Bottom Air',
+                    line: { color: 'rgb(54, 162, 235)', width: 1 }
+                };
+                plotData.push(bottomTemp);
+            }
+            
+            // Add target temperature if available
+            if (lastData.targetTemps && 
+                lastData.targetTemps.temp_air_target && 
+                lastData.targetTemps.temp_air_target.length > 0) {
+                const targetTemp = {
+                    x: lastData.targetTemps.temp_air_target.map(item => new Date(item.time)),
+                    y: lastData.targetTemps.temp_air_target.map(item => item.value),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Target Air',
+                    line: { 
+                        color: 'rgb(255, 159, 64)',
+                        dash: 'dash',
+                        width: 1
+                    }
+                };
+                plotData.push(targetTemp);
+            }
+            
+            if (plotData.length === 0) {
+                // If no data available, show a message
+                document.getElementById('air-temp-chart').innerHTML = '<div class="loading">No data available</div>';
+                return;
+            }
+            
+            const layout = {
+                autosize: true,
+                margin: { l: 25, r: 5, t: 2, b: 15 },
+                showlegend: true,
+                legend: { 
+                    orientation: 'h', 
+                    y: 1.02,
+                    xanchor: 'center',
+                    x: 0.5,
+                    font: { size: 6 },
+                    tracegroupgap: 0
+                },
+                xaxis: { 
+                    showgrid: false,
+                    automargin: true,
+                    tickfont: { size: 6 },
+                    nticks: 4,
+                    showline: false
+                },
+                yaxis: { 
+                    title: '°F',
+                    range: [0, 300],
+                    automargin: true,
+                    titlefont: { size: 7 },
+                    tickfont: { size: 6 },
+                    nticks: 5
+                },
+                font: {
+                    size: 6
+                },
+                height: null,
+                plot_bgcolor: '#fafafa'
+            };
+            
+            Plotly.newPlot('air-temp-chart', plotData, layout, { 
+                responsive: true,
+                displayModeBar: false
+            });
+        }
+        
+        // Render meat temperature chart with target
+        function renderMeatTemperatureChart() {
+            // Skip if we don't have meat temp data
+            if (!lastData.meatTemps) return;
+            
+            const plotData = [];
+            
+            // Add meat temperature trace
+            if (lastData.meatTemps.temp_meat_1 && lastData.meatTemps.temp_meat_1.length > 0) {
+                const meatTemp = {
+                    x: lastData.meatTemps.temp_meat_1.map(item => new Date(item.time)),
+                    y: lastData.meatTemps.temp_meat_1.map(item => item.value),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Meat Probe 1',
+                    line: { color: 'rgb(255, 159, 64)', width: 1 }
+                };
+                plotData.push(meatTemp);
+            }
+            
+            // Add target temperature if available
+            if (lastData.targetTemps && 
+                lastData.targetTemps.temp_meat_target && 
+                lastData.targetTemps.temp_meat_target.length > 0) {
+                const targetTemp = {
+                    x: lastData.targetTemps.temp_meat_target.map(item => new Date(item.time)),
+                    y: lastData.targetTemps.temp_meat_target.map(item => item.value),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Target Meat',
+                    line: { 
+                        color: 'rgb(153, 102, 255)',
+                        dash: 'dash',
+                        width: 1
+                    }
+                };
+                plotData.push(targetTemp);
+            }
+            
+            if (plotData.length === 0) {
+                // If no data available, show a message
+                document.getElementById('meat-temp-chart').innerHTML = '<div class="loading">No data available</div>';
+                return;
+            }
+            
+            const layout = {
+                autosize: true,
+                margin: { l: 25, r: 5, t: 2, b: 15 },
+                showlegend: true,
+                legend: { 
+                    orientation: 'h', 
+                    y: 1.02,
+                    xanchor: 'center',
+                    x: 0.5,
+                    font: { size: 6 },
+                    tracegroupgap: 0
+                },
+                xaxis: { 
+                    showgrid: false,
+                    automargin: true,
+                    tickfont: { size: 6 },
+                    nticks: 4,
+                    showline: false
+                },
+                yaxis: { 
+                    title: '°F',
+                    range: [0, 300],
+                    automargin: true,
+                    titlefont: { size: 7 },
+                    tickfont: { size: 6 },
+                    nticks: 5
+                },
+                font: {
+                    size: 6
+                },
+                height: null,
+                plot_bgcolor: '#fafafa'
+            };
+            
+            Plotly.newPlot('meat-temp-chart', plotData, layout, { 
+                responsive: true,
+                displayModeBar: false
+            });
+        }
+        
+        // Render component state chart
+        function renderComponentStateChart(data) {
+            // Skip if we don't have data
+            if (!data) return;
+            
+            // Create arrays for each component
+            const cookingState = {
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Cooking',
+                line: { color: 'rgb(75, 192, 192)', width: 1 }
+            };
+            
+            const fanState = {
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Fan',
+                line: { color: 'rgb(153, 102, 255)', width: 1 }
+            };
+            
+            const heaterState = {
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Heater',
+                line: { color: 'rgb(255, 159, 64)', width: 1 }
+            };
+            
+            const smokerRate = {
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Smoker Rate',
+                line: { color: 'rgb(54, 162, 235)', width: 1 },
+                yaxis: 'y2'
+            };
+            
+            // Populate data arrays
+            if (data.cooking && data.cooking.length > 0) {
+                cookingState.x = data.cooking.map(item => new Date(item.time));
+                cookingState.y = data.cooking.map(item => item.value);
+            }
+            
+            if (data.fan && data.fan.length > 0) {
+                fanState.x = data.fan.map(item => new Date(item.time));
+                fanState.y = data.fan.map(item => item.value);
+            }
+            
+            if (data.heater && data.heater.length > 0) {
+                heaterState.x = data.heater.map(item => new Date(item.time));
+                heaterState.y = data.heater.map(item => item.value);
+            }
+            
+            if (data.smoker_rate && data.smoker_rate.length > 0) {
+                smokerRate.x = data.smoker_rate.map(item => new Date(item.time));
+                smokerRate.y = data.smoker_rate.map(item => item.value);
+            }
+            
+            const layout = {
+                autosize: true,
+                margin: { l: 25, r: 25, t: 2, b: 15 },
+                showlegend: true,
+                legend: { 
+                    orientation: 'h', 
+                    y: 1.02,
+                    xanchor: 'center',
+                    x: 0.5,
+                    font: { size: 6 },
+                    tracegroupgap: 0
+                },
+                xaxis: { 
+                    showgrid: false,
+                    automargin: true,
+                    tickfont: { size: 6 },
+                    nticks: 4,
+                    showline: false
+                },
+                yaxis: { 
+                    title: 'State',
+                    tickvals: [0, 1],
+                    ticktext: ['Off', 'On'],
+                    automargin: true,
+                    titlefont: { size: 7 },
+                    tickfont: { size: 6 },
+                    domain: [0, 0.85]
+                },
+                yaxis2: {
+                    title: 'Rate (%)',
+                    titlefont: { size: 7 },
+                    tickfont: { size: 6 },
+                    overlaying: 'y',
+                    side: 'right',
+                    range: [0, 100],
+                    domain: [0, 0.85]
+                },
+                font: {
+                    size: 6
+                },
+                height: null,
+                plot_bgcolor: '#fafafa'
+            };
+            
+            Plotly.newPlot('component-state-chart', [cookingState, fanState, heaterState, smokerRate], layout, { 
+                responsive: true,
+                displayModeBar: false
+            });
+        }
+        
+        // Update current air temperature panel
+        function updateCurrentAirTempPanel(data) {
+            let currentAirTop = 0;
+            let currentAirBottom = 0;
+            
+            if (data.temp_air_top.length > 0) {
+                currentAirTop = data.temp_air_top[data.temp_air_top.length - 1].value;
+            }
+            
+            if (data.temp_air_bottom.length > 0) {
+                currentAirBottom = data.temp_air_bottom[data.temp_air_bottom.length - 1].value;
+            }
+            
+            // Create a gauge chart for current air temp
+            const gaugeData = [
+                {
+                    type: "indicator",
+                    mode: "gauge+number",
+                    value: (currentAirTop + currentAirBottom) / 2,
+                    title: { 
+                        text: "Current Air Temp (°F)",
+                        font: { size: 8 }
+                    },
+                    gauge: {
+                        axis: { range: [null, 300], tickfont: { size: 6 }, tickwidth: 1, ticklen: 2 },
+                        bar: { color: "rgba(255, 99, 132, 0.7)" },
+                        steps: [
+                            { range: [0, 100], color: "rgba(0, 200, 0, 0.1)" },
+                            { range: [100, 200], color: "rgba(200, 200, 0, 0.1)" },
+                            { range: [200, 300], color: "rgba(200, 0, 0, 0.1)" }
+                        ],
+                        borderwidth: 0
+                    },
+                    number: { font: { size: 10 }, suffix: "°F" }
+                }
+            ];
+            
+            const layout = {
+                autosize: true,
+                margin: { l: 2, r: 2, t: 12, b: 2 },
+                font: { size: 6 },
+                height: null
+            };
+            
+            Plotly.newPlot('current-air-temp', gaugeData, layout, { 
+                responsive: true,
+                displayModeBar: false
+            });
+        }
+        
+        // Update current meat temperature panel
+        function updateCurrentMeatTempPanel(data) {
+            let currentMeatTemp = 0;
+            
+            if (data.temp_meat_1.length > 0) {
+                currentMeatTemp = data.temp_meat_1[data.temp_meat_1.length - 1].value;
+            }
+            
+            // Create a gauge chart for current meat temp
+            const gaugeData = [
+                {
+                    type: "indicator",
+                    mode: "gauge+number",
+                    value: currentMeatTemp,
+                    title: { 
+                        text: "Current Meat Temp (°F)",
+                        font: { size: 8 }
+                    },
+                    gauge: {
+                        axis: { range: [null, 300], tickfont: { size: 6 }, tickwidth: 1, ticklen: 2 },
+                        bar: { color: "rgba(255, 159, 64, 0.7)" },
+                        steps: [
+                            { range: [0, 100], color: "rgba(0, 100, 0, 0.1)" },
+                            { range: [100, 200], color: "rgba(100, 100, 0, 0.1)" },
+                            { range: [200, 300], color: "rgba(100, 0, 0, 0.1)" }
+                        ],
+                        borderwidth: 0
+                    },
+                    number: { font: { size: 10 }, suffix: "°F" }
+                }
+            ];
+            
+            const layout = {
+                autosize: true,
+                margin: { l: 2, r: 2, t: 12, b: 2 },
+                font: { size: 6 },
+                height: null
+            };
+            
+            Plotly.newPlot('current-meat-temp', gaugeData, layout, { 
+                responsive: true,
+                displayModeBar: false
+            });
+        }
+        
+        // Update target temperature panels
+        function updateTargetTempPanels(data) {
+            // Update target air temp panel
+            let currentAirTarget = 225; // Default value
+            
+            if (data.temp_air_target.length > 0) {
+                currentAirTarget = data.temp_air_target[data.temp_air_target.length - 1].value;
+            }
+            
+            // Create an indicator for target air temp
+            const airTargetData = [
+                {
+                    type: "indicator",
+                    mode: "number",
+                    value: currentAirTarget,
+                    title: { 
+                        text: "Target Air Temp",
+                        font: { size: 8 }
+                    },
+                    number: { 
+                        valueformat: ",.0f",
+                        suffix: "°F",
+                        font: { size: 12 }
+                    }
+                }
+            ];
+            
+            Plotly.newPlot('target-air-temp', airTargetData, { 
+                autosize: true, 
+                margin: { l: 2, r: 2, t: 12, b: 2 },
+                font: { size: 6 },
+                height: null
+            }, { 
+                responsive: true,
+                displayModeBar: false
+            });
+            
+            // Update target meat temp panel
+            let currentMeatTarget = 190; // Default value
+            
+            if (data.temp_meat_target.length > 0) {
+                currentMeatTarget = data.temp_meat_target[data.temp_meat_target.length - 1].value;
+            }
+            
+            // Create an indicator for target meat temp
+            const meatTargetData = [
+                {
+                    type: "indicator",
+                    mode: "number",
+                    value: currentMeatTarget,
+                    title: { 
+                        text: "Target Meat Temp",
+                        font: { size: 8 }
+                    },
+                    number: { 
+                        valueformat: ",.0f",
+                        suffix: "°F",
+                        font: { size: 12 }
+                    }
+                }
+            ];
+            
+            Plotly.newPlot('target-meat-temp', meatTargetData, { 
+                autosize: true, 
+                margin: { l: 2, r: 2, t: 12, b: 2 },
+                font: { size: 6 },
+                height: null
+            }, { 
+                responsive: true,
+                displayModeBar: false
+            });
+        }
+        
+        // Update status panels
+        function updateStatusPanels(data) {
+            // Simplified implementation - in reality, you'd want to query for target temps and other metrics
+            // For now, we'll just show the current state of components
+            
+            let cookingActive = false;
+            let fanActive = false;
+            let heaterActive = false;
+            let smokerRateValue = 30; // Default value
+            
+            if (data.cooking && data.cooking.length > 0) {
+                cookingActive = data.cooking[data.cooking.length - 1].value === 1;
+            }
+            
+            if (data.fan && data.fan.length > 0) {
+                fanActive = data.fan[data.fan.length - 1].value === 1;
+            }
+            
+            if (data.heater && data.heater.length > 0) {
+                heaterActive = data.heater[data.heater.length - 1].value === 1;
+            }
+            
+            if (data.smoker_rate && data.smoker_rate.length > 0) {
+                smokerRateValue = data.smoker_rate[data.smoker_rate.length - 1].value;
+            }
+            
+            // Update cooking status panel
+            const cookingData = [
+                {
+                    type: "indicator",
+                    mode: "gauge+number",
+                    value: cookingActive ? 1 : 0,
+                    title: { 
+                        text: "Cooking Status",
+                        font: { size: 8 }
+                    },
+                    gauge: {
+                        axis: { range: [0, 1], tickvals: [], visible: false },
+                        bar: { color: cookingActive ? "rgba(75, 192, 192, 0.9)" : "rgba(200, 200, 200, 0.5)" },
+                        bgcolor: "white",
+                        borderwidth: 0,
+                        bordercolor: "gray",
+                        steps: []
+                    },
+                    number: { 
+                        font: { size: 10 },
+                        prefix: cookingActive ? "ON" : "OFF"
+                    }
+                }
+            ];
+            
+            Plotly.newPlot('cooking-status', cookingData, { 
+                autosize: true, 
+                margin: { l: 2, r: 2, t: 12, b: 2 },
+                font: { size: 6 },
+                height: null 
+            }, { 
+                responsive: true,
+                displayModeBar: false
+            });
+            
+            // Update fan status panel
+            const fanData = [
+                {
+                    type: "indicator",
+                    mode: "gauge+number",
+                    value: fanActive ? 1 : 0,
+                    title: { 
+                        text: "Fan Status",
+                        font: { size: 8 }
+                    },
+                    gauge: {
+                        axis: { range: [0, 1], tickvals: [], visible: false },
+                        bar: { color: fanActive ? "rgba(153, 102, 255, 0.9)" : "rgba(200, 200, 200, 0.5)" },
+                        bgcolor: "white",
+                        borderwidth: 0,
+                        bordercolor: "gray",
+                        steps: []
+                    },
+                    number: { 
+                        font: { size: 10 },
+                        prefix: fanActive ? "ON" : "OFF"
+                    }
+                }
+            ];
+            
+            Plotly.newPlot('fan-status', fanData, { 
+                autosize: true, 
+                margin: { l: 2, r: 2, t: 12, b: 2 },
+                font: { size: 6 },
+                height: null 
+            }, { 
+                responsive: true,
+                displayModeBar: false
+            });
+            
+            // Update heater status panel
+            const heaterData = [
+                {
+                    type: "indicator",
+                    mode: "gauge+number",
+                    value: heaterActive ? 1 : 0,
+                    title: { 
+                        text: "Heater Status",
+                        font: { size: 8 }
+                    },
+                    gauge: {
+                        axis: { range: [0, 1], tickvals: [], visible: false },
+                        bar: { color: heaterActive ? "rgba(255, 159, 64, 0.9)" : "rgba(200, 200, 200, 0.5)" },
+                        bgcolor: "white",
+                        borderwidth: 0,
+                        bordercolor: "gray",
+                        steps: []
+                    },
+                    number: { 
+                        font: { size: 10 },
+                        prefix: heaterActive ? "ON" : "OFF"
+                    }
+                }
+            ];
+            
+            Plotly.newPlot('heater-status', heaterData, { 
+                autosize: true, 
+                margin: { l: 2, r: 2, t: 12, b: 2 },
+                font: { size: 6 },
+                height: null 
+            }, { 
+                responsive: true,
+                displayModeBar: false
+            });
+            
+            // Update smoker rate panel
+            updateSmokerRatePanel(smokerRateValue);
+            
+            // Create placeholders for the remaining panels 
+            createPlaceholderPanel('temp-delta', 'Temp Delta', 5, '°F', [-50, 50]);
+            createPlaceholderPanel('cook-duration', 'Cook Duration', 120, 'min', [0, 600]);
+        }
+        
+        // Update smoker rate panel
+        function updateSmokerRatePanel(rate) {
+            const smokerRateData = [
+                {
+                    type: "indicator",
+                    mode: "gauge+number",
+                    value: rate,
+                    title: { 
+                        text: "Smoker Rate (%)",
+                        font: { size: 8 }
+                    },
+                    gauge: {
+                        axis: { range: [0, 100], tickfont: { size: 6 }, tickwidth: 1, ticklen: 2 },
+                        bar: { color: "rgba(54, 162, 235, 0.8)" },
+                        steps: [
+                            { range: [0, 30], color: "rgba(0, 0, 200, 0.1)" },
+                            { range: [30, 70], color: "rgba(0, 0, 200, 0.2)" },
+                            { range: [70, 100], color: "rgba(0, 0, 200, 0.3)" }
+                        ],
+                        borderwidth: 0
+                    },
+                    number: { font: { size: 10 }, suffix: "%" }
+                }
+            ];
+            
+            const layout = {
+                autosize: true,
+                margin: { l: 2, r: 2, t: 12, b: 2 },
+                font: { size: 6 },
+                height: null
+            };
+            
+            Plotly.newPlot('smoker-rate', smokerRateData, layout, { 
+                responsive: true,
+                displayModeBar: false
+            });
+        }
+        
+        // Helper to create placeholder panels
+        function createPlaceholderPanel(elementId, title, value, suffix, range) {
+            const data = [
+                {
+                    type: "indicator",
+                    mode: "number",
+                    value: value,
+                    title: { 
+                        text: title,
+                        font: { size: 8 }
+                    },
+                    number: { 
+                        valueformat: ",.0f",
+                        suffix: suffix,
+                        font: { size: 12 }
+                    }
+                }
+            ];
+            
+            Plotly.newPlot(elementId, data, { 
+                autosize: true, 
+                margin: { l: 2, r: 2, t: 12, b: 2 },
+                font: { size: 6 },
+                height: null
+            }, { 
+                responsive: true,
+                displayModeBar: false
+            });
+        }
+        
+        // Update connection status
+        function updateConnectionStatus(status) {
+            const statusElement = document.getElementById('status-indicator');
+            statusElement.textContent = `Status: ${status}`;
+            
+            // Add color coding for status
+            if (status === 'Connected') {
+                statusElement.style.color = 'green';
+            } else if (status === 'Connection Error') {
+                statusElement.style.color = 'red';
+            } else {
+                statusElement.style.color = 'orange'; // Connecting or other states
+            }
+        }
+        
+        // Update dashboard when time range changes
+        document.getElementById('time-range').addEventListener('change', function() {
+            currentTimeRange = this.value;
+            loadAllData();
+        });
+        
+        // Update dashboard when selection changes
+        document.getElementById('dashboard-select').addEventListener('change', function() {
+            currentDashboard = this.value;
+            document.getElementById('dashboard-title').textContent = 
+                this.options[this.selectedIndex].textContent;
+            
+            // In a more complex implementation, you would show/hide different panels based on the selected dashboard
+        });
+        
+        // Update refresh rate
+        document.getElementById('refresh-rate').addEventListener('change', function() {
+            refreshRate = parseInt(this.value);
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+            refreshInterval = setInterval(loadAllData, refreshRate);
+        });
+        
+        // Refresh button functionality
+        document.getElementById('refresh-btn').addEventListener('click', function() {
+            loadAllData();
+        });
+        
+        // Fullscreen button functionality
+        document.getElementById('fullscreen-btn').addEventListener('click', function() {
+            const mainContent = document.querySelector('.main-content');
+            if (mainContent.requestFullscreen) {
+                mainContent.requestFullscreen();
+            } else if (mainContent.webkitRequestFullscreen) {
+                mainContent.webkitRequestFullscreen();
+            } else if (mainContent.msRequestFullscreen) {
+                mainContent.msRequestFullscreen();
+            }
+        });
+        
+        // Initialize everything once DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Calculate available space after accounting for system menubar
+            adjustForMenubar();
+            
+            // Initialize charts
+            initCharts();
+            
+            // Initialize control buttons
+            initControlButtons();
+            
+            // Check for kiosk mode parameter in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('kiosk')) {
+                // Hide sidebar in kiosk mode
+                document.querySelector('.sidebar').style.display = 'none';
+                
+                // Auto-enter fullscreen after a short delay
+                setTimeout(function() {
+                    enterFullscreen();
+                    
+                    // Force portrait orientation if possible
+                    if (screen.orientation) {
+                        try {
+                            screen.orientation.lock('portrait');
+                        } catch (e) {
+                            console.log('Cannot lock orientation:', e);
+                        }
+                    }
+                    
+                    // Re-calculate available space after entering fullscreen
+                    setTimeout(adjustForMenubar, 500);
+                }, 1000);
+            }
+            
+            // Add resize observer to handle layout changes
+            const resizeObserver = new ResizeObserver(entries => {
+                // Adjust layout for menubar when size changes
+                adjustForMenubar();
+                
+                for (let entry of entries) {
+                    // Re-render all charts when size changes
+                    if (lastData.airTemps) renderAirTemperatureChart();
+                    if (lastData.meatTemps) renderMeatTemperatureChart();
+                    if (lastData.componentState) renderComponentStateChart(lastData.componentState);
+                    
+                    // Re-render panels
+                    if (lastData.airTemps) updateCurrentAirTempPanel(lastData.airTemps);
+                    if (lastData.meatTemps) updateCurrentMeatTempPanel(lastData.meatTemps);
+                    if (lastData.targetTemps) updateTargetTempPanels(lastData.targetTemps);
+                    if (lastData.componentState) updateStatusPanels(lastData.componentState);
+                }
+            });
+            
+            // Observe the body element for any size changes
+            resizeObserver.observe(document.body);
+            
+            // Handle orientation change
+            window.addEventListener('orientationchange', function() {
+                // Small delay to let the browser finish rotating
+                setTimeout(function() {
+                    adjustForMenubar();
+                    if (lastData.airTemps) renderAirTemperatureChart();
+                    if (lastData.meatTemps) renderMeatTemperatureChart();
+                    if (lastData.componentState) renderComponentStateChart(lastData.componentState);
+                }, 300);
+            });
+        });
+        
+        // Function to adjust layout for the menubar
+        function adjustForMenubar() {
+            // Get the window inner height (available height minus system menubar)
+            const availableHeight = window.innerHeight;
+            const body = document.body;
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            
+            console.log("Available height:", availableHeight);
+            
+            // Set body height to available height
+            body.style.height = availableHeight + 'px';
+            
+            // Adjust sidebar and main content based on kiosk mode
+            if (sidebar.style.display === 'none') {
+                // Kiosk mode - full height to main content
+                mainContent.style.height = availableHeight + 'px';
+            } else {
+                // Normal mode - allocate space based on sidebar height
+                const sidebarHeight = sidebar.offsetHeight;
+                console.log("Sidebar height:", sidebarHeight);
+                
+                // Set main content height to available height minus sidebar
+                mainContent.style.height = (availableHeight - sidebarHeight) + 'px';
+                
+                // If we're below 600px total height, further reduce elements
+                if (availableHeight < 600) {
+                    // Apply extra compact styles for very small displays
+                    document.querySelectorAll('.chart-panel h3, .small-panel h4').forEach(el => {
+                        el.style.padding = '1px';
+                        el.style.fontSize = '9px';
+                    });
+                    
+                    document.querySelectorAll('.chart-container').forEach(el => {
+                        el.style.padding = '1px';
+                    });
+                    
+                    document.querySelectorAll('.small-chart').forEach(el => {
+                        el.style.padding = '0';
+                    });
+                }
+            }
+            
+            // Adjust temperature chart column and small panels grid proportions
+            const dashboardLayout = document.querySelector('.dashboard-layout');
+            const dashboardHeight = dashboardLayout.offsetHeight;
+            const tempChartsColumn = document.querySelector('.temp-charts-column');
+            const smallPanelsGrid = document.querySelector('.small-panels-grid');
+            
+            // Adjust proportion based on available height
+            if (availableHeight < 700) {
+                tempChartsColumn.style.height = '50%';
+                smallPanelsGrid.style.height = '50%';
+            } else {
+                tempChartsColumn.style.height = '52%';
+                smallPanelsGrid.style.height = '48%';
+            }
+        }
+        
+        // Helper function to enter fullscreen
+        function enterFullscreen() {
+            const element = document.documentElement;
+            
+            if (element.requestFullscreen) {
+                element.requestFullscreen();
+            } else if (element.webkitRequestFullscreen) {
+                element.webkitRequestFullscreen();
+            } else if (element.msRequestFullscreen) {
+                element.msRequestFullscreen();
+            }
+        }
+        
+        // Initialize control buttons
+        function initControlButtons() {
+            const cookingToggleBtn = document.getElementById('cooking-toggle-btn');
+            const setAirTempBtn = document.getElementById('set-air-temp-btn');
+            const setMeatTempBtn = document.getElementById('set-meat-temp-btn');
+            const setSmokerRateBtn = document.getElementById('set-smoker-rate-btn');
+            const airTempInput = document.getElementById('air-temp-input');
+            const meatTempInput = document.getElementById('meat-temp-input');
+            const smokerRateInput = document.getElementById('smoker-rate-input');
+            
+            // Get current parameters and update button state
+            fetch('/api/parameters')
+                .then(response => response.json())
+                .then(params => {
+                    // Update cooking toggle button
+                    updateCookingToggleButton(params.cooking_on);
+                    
+                    // Set placeholder values for temperature inputs
+                    airTempInput.placeholder = params.temp_air_target || 250;
+                    meatTempInput.placeholder = params.temp_meat_1_target || 205;
+                    smokerRateInput.placeholder = params.smoker_rate || 30;
+                })
+                .catch(error => {
+                    console.error('Error loading parameters:', error);
+                });
+            
+            // Cooking toggle button
+            cookingToggleBtn.addEventListener('click', function() {
+                const isCookingOn = this.textContent === 'Stop Cooking';
+                const newState = !isCookingOn;
+                
+                fetch('/api/control/cooking-state', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ state: newState }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateCookingToggleButton(newState);
+                        // Refresh data after change
+                        loadAllData();
+                    } else {
+                        alert('Failed to update cooking state: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating cooking state:', error);
+                    alert('Error updating cooking state. See console for details.');
+                });
+            });
+            
+            // Set air temperature button
+            setAirTempBtn.addEventListener('click', function() {
+                const temperature = parseInt(airTempInput.value, 10);
+                
+                if (isNaN(temperature)) {
+                    alert('Please enter a valid temperature');
+                    return;
+                }
+                
+                if (temperature < 0 || temperature > 500) {
+                    alert('Air temperature must be between 0 and 500°F');
+                    return;
+                }
+                
+                fetch('/api/control/air-temperature', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ temperature: temperature }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        airTempInput.value = '';
+                        airTempInput.placeholder = temperature;
+                        // Refresh data after change
+                        loadAllData();
+                    } else {
+                        alert('Failed to update air temperature: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating air temperature:', error);
+                    alert('Error updating air temperature. See console for details.');
+                });
+            });
+            
+            // Set meat temperature button
+            setMeatTempBtn.addEventListener('click', function() {
+                const temperature = parseInt(meatTempInput.value, 10);
+                
+                if (isNaN(temperature)) {
+                    alert('Please enter a valid temperature');
+                    return;
+                }
+                
+                if (temperature < 0 || temperature > 300) {
+                    alert('Meat temperature must be between 0 and 300°F');
+                    return;
+                }
+                
+                fetch('/api/control/meat-temperature', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ temperature: temperature }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        meatTempInput.value = '';
+                        meatTempInput.placeholder = temperature;
+                        // Refresh data after change
+                        loadAllData();
+                    } else {
+                        alert('Failed to update meat temperature: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating meat temperature:', error);
+                    alert('Error updating meat temperature. See console for details.');
+                });
+            });
+            
+            // Set smoker rate button
+            setSmokerRateBtn.addEventListener('click', function() {
+                const rate = parseInt(smokerRateInput.value, 10);
+                
+                if (isNaN(rate)) {
+                    alert('Please enter a valid rate');
+                    return;
+                }
+                
+                if (rate < 0 || rate > 100) {
+                    alert('Smoker rate must be between 0 and 100%');
+                    return;
+                }
+                
+                fetch('/api/control/smoker-rate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ rate: rate }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        smokerRateInput.value = '';
+                        smokerRateInput.placeholder = rate;
+                        // Refresh data after change
+                        loadAllData();
+                    } else {
+                        alert('Failed to update smoker rate: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating smoker rate:', error);
+                    alert('Error updating smoker rate. See console for details.');
+                });
+            });
+        }
+        
+        // Update cooking toggle button state
+        function updateCookingToggleButton(isOn) {
+            const cookingToggleBtn = document.getElementById('cooking-toggle-btn');
+            
+            if (isOn) {
+                cookingToggleBtn.textContent = 'Stop Cooking';
+                cookingToggleBtn.classList.remove('action-btn');
+                cookingToggleBtn.classList.add('action-btn', 'off');
+            } else {
+                cookingToggleBtn.textContent = 'Start Cooking';
+                cookingToggleBtn.classList.remove('action-btn', 'off');
+                cookingToggleBtn.classList.add('action-btn');
+            }
+        }
+    </script>
+</body>
+</html>
