@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 # Add the parent directory to path to import smoker_secrets
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from datetime import datetime, timedelta
-import smoker_secrets
+import Smoker_Secrets
 
 # InfluxDB client
 from influxdb_client import InfluxDBClient
@@ -20,10 +20,10 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 app = Flask(__name__)
 
 # InfluxDB configuration
-INFLUX_URL = smoker_secrets.INFLUX_URL
-INFLUX_TOKEN = smoker_secrets.INFLUX_TOKEN
-INFLUX_ORG = smoker_secrets.INFLUX_ORG
-INFLUX_BUCKET = smoker_secrets.INFLUX_BUCKET
+INFLUX_URL = Smoker_Secrets.INFLUX_URL
+INFLUX_TOKEN = Smoker_Secrets.INFLUX_TOKEN
+INFLUX_ORG = Smoker_Secrets.INFLUX_ORG
+INFLUX_BUCKET = Smoker_Secrets.INFLUX_BUCKET
 
 # Parameters file path - same as defined in OpenSmoker.py
 PARAMS_FILE = "/home/user/OpenSmoker_Parameters.json"
